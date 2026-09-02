@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+// path: crs-frontend/src/pages/AdminCoursesPage.tsx
+import { useState } from 'react';
 import axios from 'axios';
 import { useCourses } from '../api/useCourses';
 import { createCourse, updateCourse, deleteCourse } from '../api/courseApi';
@@ -7,27 +8,20 @@ import CourseList from '../components/CourseList';
 import Pagination from '../components/Pagination';
 import CourseForm from '../components/CourseForm';
 import type { Course, CourseFormValues } from '../types/course';
+import type { ApiErrorResponse } from '../types/apiError';
 
-interface ApiErrorResponse {
-    message?: string;
-    [key: string]: unknown;
-}
-
-export const CoursePage = () => {
-    const [keyword, setKeyword] = useState<string>('');
-    const [page, setPage] = useState<number>(0);
-
+export default function AdminCoursesPage() {
+    const [keyword, setKeyword] = useState('');
+    const [page, setPage] = useState(0);
     const [editingCourse, setEditingCourse] = useState<Course | null>(null);
-    const [submitting, setSubmitting] = useState<boolean>(false);
+    const [submitting, setSubmitting] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
+    const { courses, totalPages, state, errorMessage, refetch } = useCourses(keyword, page);
 
-    // Lấy đúng các giá trị mà useCourses trả về: state và errorMessage
-    const { courses, totalPages, state, errorMessage, refetch } = useCourses(keyword, page, 5);
-
-    const handleSearch = useCallback((newKeyword: string) => {
+    const handleSearch = (newKeyword: string) => {
         setKeyword(newKeyword);
         setPage(0);
-    }, []);
+    };
 
     const extractErrorMessage = (err: unknown): string => {
         if (axios.isAxiosError<ApiErrorResponse>(err)) {
@@ -35,7 +29,7 @@ export const CoursePage = () => {
             if (data?.message) return data.message;
             if (data) {
                 const firstFieldError = Object.values(data).find((v) => typeof v === 'string');
-                if (firstFieldError) return firstFieldError as string;
+                if (firstFieldError) return firstFieldError;
             }
         }
         return 'Đã xảy ra lỗi, vui lòng thử lại.';
@@ -52,7 +46,7 @@ export const CoursePage = () => {
             }
             setEditingCourse(null);
             refetch();
-        } catch (err: unknown) {
+        } catch (err) {
             setFormError(extractErrorMessage(err));
         } finally {
             setSubmitting(false);
@@ -64,15 +58,14 @@ export const CoursePage = () => {
         try {
             await deleteCourse(course.id);
             refetch();
-        } catch (err: unknown) {
+        } catch (err) {
             alert(extractErrorMessage(err));
         }
     };
 
     return (
-        <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '900px', margin: '0 auto' }}>
-            <h2>Quản lý môn học (Admin)</h2>
-
+        <div style={{ padding: 24, fontFamily: 'sans-serif', maxWidth: 800, margin: '0 auto' }}>
+            <h1>Quản lý môn học (Admin)</h1>
             <CourseForm
                 editingCourse={editingCourse}
                 onSubmit={handleFormSubmit}
@@ -80,10 +73,8 @@ export const CoursePage = () => {
                 submitting={submitting}
                 serverError={formError}
             />
-
-            <SearchBox onSearch={handleSearch} placeholder="Nhập tên môn học cần tìm..." />
-
-            <div style={{ marginTop: '20px' }}>
+            <SearchBox onSearch={handleSearch} />
+            <div style={{ marginTop: 16 }}>
                 <CourseList
                     courses={courses}
                     state={state}
@@ -93,12 +84,7 @@ export const CoursePage = () => {
                     onDelete={handleDelete}
                 />
             </div>
-
-            <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-            />
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
     );
-};
+}

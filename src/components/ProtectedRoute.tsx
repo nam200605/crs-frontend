@@ -1,13 +1,22 @@
-import { useContext } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+// path: crs-frontend/src/components/ProtectedRoute.tsx
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-export const ProtectedRoute = () => {
-    const { token } = useContext(AuthContext);
+interface ProtectedRouteProps {
+    children: React.ReactNode;
+    requiredRole?: 'ADMIN' | 'STUDENT';
+}
 
-    if (!token) {
+export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+    const { user, isAuthenticated } = useAuth();
+
+    if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
 
-    return <Outlet />;
-};
+    if (requiredRole && user?.role !== requiredRole) {
+        return <Navigate to="/courses" replace />;
+    }
+
+    return <>{children}</>;
+}

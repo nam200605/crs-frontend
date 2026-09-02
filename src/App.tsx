@@ -1,14 +1,41 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { CoursePage } from './pages/CoursePage';
+// path: crs-frontend/src/App.tsx
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import LoginPage from './pages/LoginPage';
+import CoursesPage from './pages/CoursesPage';
+import AdminCoursesPage from './pages/AdminCoursesPage';
+import RegisterCoursePage from './pages/RegisterCoursePage';
+import Navbar from './components/Navbar';
 
 function App() {
     return (
-        <Router>
-            <Routes>
-                <Route path="/" element={<CoursePage />} />
-                <Route path="/mon-hoc" element={<CoursePage />} />
-            </Routes>
-        </Router>
+        <BrowserRouter>
+            <AuthProvider>
+                <Navbar />
+                <Routes>
+                    <Route path="/" element={<Navigate to="/courses" replace />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/courses" element={<CoursesPage />} />
+                    <Route
+                        path="/admin/courses"
+                        element={
+                            <ProtectedRoute requiredRole="ADMIN">
+                                <AdminCoursesPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/register-course"
+                        element={
+                            <ProtectedRoute requiredRole="STUDENT">
+                                <RegisterCoursePage />
+                            </ProtectedRoute>
+                        }
+                    />
+                </Routes>
+            </AuthProvider>
+        </BrowserRouter>
     );
 }
 

@@ -1,9 +1,7 @@
-import apiClient from './client';
-import type { LoginResponse } from '../types';
+// path: crs-frontend/src/api/authApi.ts
+import axiosClient from './axiosClient';
+import type { LoginRequest, LoginResponse } from '../types/auth';
 
-export const authApi = {
-    login: async (credentials: { username: string; password: string }): Promise<LoginResponse> => {
-        const response = await apiClient.post('/auth/login', credentials);
-        return response.data;
-    },
+export const login = (payload: LoginRequest) => {
+    return axiosClient.post<LoginResponse>('/api/auth/login', payload);
 };

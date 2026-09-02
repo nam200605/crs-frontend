@@ -1,55 +1,70 @@
-import React, { useState, useContext } from 'react';
+// path: crs-frontend/src/pages/LoginPage.tsx
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authApi } from '../api/authApi';
-import { AuthContext } from '../context/AuthContext';
+import axios from 'axios';
+import { login as loginApi } from '../api/authApi';
+import { useAuth } from '../context/AuthContext';
+import type { ApiErrorResponse } from '../types/apiError';
 
-export const LoginPage = () => {
+export default function LoginPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const { login } = useContext(AuthContext);
+    const [error, setError] = useState<string | null>(null);
+    const [submitting, setSubmitting] = useState(false);
+
+    const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
+        setSubmitting(true);
         try {
-            const data = await authApi.login({ username, password });
-            login(data.token);
-            navigate('/');
-        } catch (err: any) {
-            setError('Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản!');
+            const res = await loginApi({ username, password });
+
+            // Xử lý linh hoạt cấu trúc trả về từ axiosClient
+            // Nếu axiosClient có interceptor trả về thẳng data thì dùng res, ngược lại dùng res.data
+            const payload = (res as any).data ? (res as any).data : res;
+
+            login(payload);
+            navigate('/courses');
+        } catch (err) {
+            if (axios.isAxiosError<ApiErrorResponse>(err) && err.response?.data?.message) {
+                setError(err.response.data.message);
+            } else {
+                setError('Đăng nhập thất bại, vui lòng kiểm tra lại kết nối hoặc thông tin.');
+            }
+        } finally {
+            setSubmitting(false);
         }
     };
 
     return (
-        <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-            <h2>Đăng Nhập</h2>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+        <div style={{ maxWidth: 360, margin: '80px auto', padding: 24, border: '1px solid #ddd', borderRadius: 8 }}>
+            <h2>Đăng nhập hệ thống CRS</h2>
             <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: '15px' }}>
-                    <label>Tên đăng nhập:</label>
+                <div style={{ marginBottom: 12 }}>
+                    <label>Tên đăng nhập</label><br />
                     <input
-                        type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-                        required
+                        style={{ width: '100%' }}
                     />
                 </div>
-                <div style={{ marginBottom: '15px' }}>
-                    <label>Mật khẩu:</label>
+                <div style={{ marginBottom: 12 }}>
+                    <label>Mật khẩu</label><br />
                     <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-                        required
+                        style={{ width: '100%' }}
                     />
                 </div>
-                <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#007bff', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                    Đăng nhập
+                {error && <p style={{ color: '#b91c1c' }}>{error}</p>}
+                <button type="submit" disabled={submitting} style={{ width: '100%' }}>
+                    {submitting ? 'Đang xử lý...' : 'Đăng nhập'}
                 </button>
             </form>
         </div>
     );
-};
+}

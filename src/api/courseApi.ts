@@ -1,15 +1,26 @@
-import axios from 'axios';
-import type { Course, PageResponse } from '../types/course';
+import axiosClient from './axiosClient';
+import type { Course, PageResponse, CourseFormValues } from '../types/course';
 
-// Gọi API thông qua Gateway (cổng 8080 hoặc port Gateway bạn thiết lập)
-const API_BASE_URL = 'http://localhost:8080/api/courses';
-
-export const getCourses = (keyword: string, page: number, size: number) => {
-    return axios.get<PageResponse<Course>>(API_BASE_URL, {
-        params: {
-            keyword,
-            page,
-            size,
-        },
+export const getCourses = (keyword?: string, page = 0, size = 5) => {
+    return axiosClient.get<PageResponse<Course>>('/api/courses', {
+        params: { keyword, page, size },
     });
+};
+
+const toPayload = (values: CourseFormValues) => ({
+    tenMonHoc: values.tenMonHoc.trim(),
+    soTinChi: Number(values.soTinChi),
+    soChoToiDa: Number(values.soChoToiDa),
+});
+
+export const createCourse = (values: CourseFormValues) => {
+    return axiosClient.post<Course>('/api/courses', toPayload(values));
+};
+
+export const updateCourse = (id: string, values: CourseFormValues) => {
+    return axiosClient.put<Course>(`/api/courses/${id}`, toPayload(values));
+};
+
+export const deleteCourse = (id: string) => {
+    return axiosClient.delete(`/api/courses/${id}`);
 };

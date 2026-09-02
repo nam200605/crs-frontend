@@ -13,4 +13,15 @@ export type PageResponse<T> = {
     totalElements: number;
     size: number;
     number: number;
+}
+export interface CourseFormValues {
+    tenMonHoc: string;
+    soTinChi: string;
+    soChoToiDa: string;
+}
+
+export const emptyCourseForm: CourseFormValues = {
+    tenMonHoc: '',
+    soTinChi: '',
+    soChoToiDa: '',
 };
